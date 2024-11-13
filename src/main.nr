@@ -79,9 +79,10 @@ contract NoteSharing {
             &mut context,
             alice_ovpk_m,
             alice,
-            alice
+            AztecAddress::zero() // unused
         ));
 
+        // NOTE: modifies the note in order to insert it twice in the storage
         shared_note.isAlice = false;
 
         // NOTE: create a note for Bob (recipient)
@@ -89,7 +90,7 @@ contract NoteSharing {
             &mut context,
             alice_ovpk_m,
             bob,
-            alice
+            AztecAddress::zero() // unused
         ));
 
         // NOTE: uncomment for checking correct re-build of the Contract
@@ -146,9 +147,5 @@ contract NoteSharing {
         assert(popped_notes.len() == 1, "Note not removed");
     }
 
-    pub(crate) unconstrained fn nullifier_of_private(owner: AztecAddress) -> pub Field {
-        // TODO: implement this method
-        0
-    }
 }
 

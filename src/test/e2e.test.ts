@@ -137,6 +137,7 @@ import {
 
     describe("bob_action", () => {
         let sharedNotes: ExtendedNote[]; 
+        let nullifiers: Fr[];
 
         it.skip("should revert if the note doesnt exist", async () => {
             const txReceipt = sharedNoteContract
@@ -161,12 +162,14 @@ import {
             .wait({debug: true});
 
             sharedNotes = txReceipt.debugInfo?.visibleIncomingNotes!;
+            nullifiers = txReceipt.debugInfo?.nullifiers!;
 
             expect(txReceipt.status).toBe("success");        
         })
 
         it("should nullify the note", async () => {
            expect(sharedNotes.length).toBe(0);
+           expect(nullifiers.length).toBe(2); // TODO: why 2???
         })
     })
 
@@ -175,8 +178,15 @@ import {
         let sharedNotesAfterNullification: ExtendedNote[];
 
         beforeAll(async () => {
+            // NOTE: redeploying to ignore previous notes and nullifiers
+            const sharedNoteReceipt = await NoteSharingContract.deploy(deployer)
+              .send()
+              .wait();
+        
+            sharedNoteContract = sharedNoteReceipt.contract;
+
             // Because we nullified the note in the previous test, we need to create a new one.
-            // NOTE: fails, didn't nullify the note
+            // NOTE: fails w/o redeploy, didn't nullify Alice's note
             const txReceipt = await sharedNoteContract
             .withWallet(alice)
             .methods.create_and_share_note(

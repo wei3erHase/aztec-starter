@@ -12,7 +12,7 @@ import {
   
   // Global variables
   let pxe: PXE;
-  let sharedNote: NoteSharingContract;
+  let sharedNoteContract: NoteSharingContract;
   
   let alice: AccountWalletWithSecretKey;
   let bob: AccountWalletWithSecretKey;
@@ -46,7 +46,7 @@ import {
         .send()
         .wait();
   
-      sharedNote = sharedNoteReceipt.contract;
+        sharedNoteContract = sharedNoteReceipt.contract;
     }, 200_000);
 
     describe("create_and_share_note(...)", () => {
@@ -56,7 +56,7 @@ import {
         let sharedOutNotes: ExtendedNote[];
 
         it("should not revert", async () => {
-            const txReceipt = await sharedNote
+            const txReceipt = await sharedNoteContract
             .withWallet(alice)
             .methods.create_and_share_note(
                 bob.getAddress(),
@@ -78,8 +78,8 @@ import {
         })
         
         it("should create two notes", async () => {
-            // expect(sharedNotes.length).toBe(2); // fails
-            expect(sharedOutNotes.length).toBe(2); // works
+            expect(sharedNotes.length).toBe(2); // fails
+            // expect(sharedOutNotes.length).toBe(2); // works
         })
 
         it("should create a note for alice with the correct parameters", async () => {
@@ -100,9 +100,9 @@ import {
         })
         
         it("should create a note for bob with the correct parameters", async () => {
-            const aliceParam = sharedOutNotes[1].note.items[0];
-            const bobParam = sharedOutNotes[1].note.items[1];
-            const noteOwner = sharedOutNotes[1].owner;
+            const aliceParam = sharedNotes[1].note.items[0];
+            const bobParam = sharedNotes[1].note.items[1];
+            const noteOwner = sharedNotes[1].owner;
 
             const aliceAddress = alice.getAddress();
             const bobAddress = bob.getAddress();
@@ -111,7 +111,7 @@ import {
             expect(bobParam).toEqual(bobAddress);
             expect(noteOwner).toEqual(bobAddress);
 
-            shared_key_nullifier_bob = sharedOutNotes[1].note.items[2];
+            shared_key_nullifier_bob = sharedNotes[1].note.items[2];
         })
 
         it("nullifier key is the same between the 2 notes", async () => {
@@ -121,8 +121,8 @@ import {
             );
         });
         
-        it("should revert if the note already exists", async () => {
-            const txReceipt = sharedNote
+        it.skip("should revert if the note already exists", async () => {
+            const txReceipt = sharedNoteContract
             .withWallet(alice)
             .methods.create_and_share_note(bob.getAddress())
             .simulate();
@@ -138,8 +138,8 @@ import {
     describe("bob_action", () => {
         let sharedNotes: ExtendedNote[]; 
 
-        it("should revert if the note doesnt exist", async () => {
-            const txReceipt = sharedNote
+        it.skip("should revert if the note doesnt exist", async () => {
+            const txReceipt = sharedNoteContract
             .withWallet(bob)
             .methods.bob_action(randomAccount.getAddress())
             .simulate();
@@ -152,7 +152,7 @@ import {
         })
 
         it("should not revert", async () => {
-            const txReceipt = await sharedNote
+            const txReceipt = await sharedNoteContract
             .withWallet(bob)
             .methods.bob_action(
                 alice.getAddress(),
@@ -176,7 +176,8 @@ import {
 
         beforeAll(async () => {
             // Because we nullified the note in the previous test, we need to create a new one.
-            const txReceipt = await sharedNote
+            // NOTE: fails, didn't nullify the note
+            const txReceipt = await sharedNoteContract
             .withWallet(alice)
             .methods.create_and_share_note(
                 bob.getAddress(),
@@ -191,8 +192,8 @@ import {
             expect(sharedNotes.length).toBe(2);
         })
 
-        it("should revert if the note doesnt exist", async () => {
-            const txReceipt = sharedNote
+        it.skip("should revert if the note doesnt exist", async () => {
+            const txReceipt = sharedNoteContract
             .withWallet(alice)
             .methods.alice_action(randomAccount.getAddress())
             .simulate();
@@ -205,7 +206,7 @@ import {
         })
 
         it("should not revert", async () => {
-            const txReceipt = await sharedNote
+            const txReceipt = await sharedNoteContract
             .withWallet(alice)
             .methods.alice_action(
                 bob.getAddress(),

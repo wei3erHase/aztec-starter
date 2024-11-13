@@ -70,7 +70,7 @@ contract NoteSharing {
         assert(notes.len() == 0, "Note already exists");
 
         let random_field = random();
-        let mut shared_note = SharedNote::new(alice, bob, random_field);
+        let mut shared_note = SharedNote::new(alice, bob, random_field, true);
         
         let alice_ovpk_m = get_public_keys(alice).ovpk_m;
 
@@ -81,6 +81,8 @@ contract NoteSharing {
             alice,
             alice
         ));
+
+        shared_note.isAlice = false;
 
         // NOTE: create a note for Bob (recipient)
         storage.shared_notes.insert(&mut shared_note).emit(encode_and_encrypt_note(

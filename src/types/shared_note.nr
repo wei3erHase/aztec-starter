@@ -21,7 +21,8 @@ use dep::aztec::{
 pub struct SharedNote {
     alice: AztecAddress,        // msg_sender
     bob: AztecAddress,          // inputted by msg_sender
-    shared_nullifier_key: Field // oracle::random
+    shared_nullifier_key: Field, // oracle::random
+    isAlice: bool
 }
 
 /// @notice Declare the length of the note.
@@ -32,11 +33,13 @@ impl SharedNote {
         alice: AztecAddress,
         bob: AztecAddress,
         shared_nullifier_key: Field,
+        isAlice: bool
     ) -> Self {
         SharedNote {
             alice,
             bob,
             shared_nullifier_key,
+            isAlice,
             header: NoteHeader::empty()
         }
     }
@@ -56,17 +59,17 @@ impl NullifiableNote for SharedNote {
         context: &mut PrivateContext,
         note_hash_for_nullify: Field,
     ) -> Field {
-        let note_hash_for_nullify = compute_note_hash_for_nullify(self);
+        // let note_hash_for_nullify = compute_note_hash_for_nullify(self);
         poseidon2_hash_with_separator(
-            [note_hash_for_nullify],
+            [self.shared_nullifier_key],
             GENERATOR_INDEX__NOTE_NULLIFIER as Field,
         )
     }
 
     unconstrained fn compute_nullifier_without_context(self) -> Field {
-        let note_hash_for_nullify = compute_note_hash_for_nullify(self);
+        // let note_hash_for_nullify = compute_note_hash_for_nullify(self);
         poseidon2_hash_with_separator(
-            [note_hash_for_nullify],
+            [self.shared_nullifier_key],
             GENERATOR_INDEX__NOTE_NULLIFIER as Field,
         )
     }

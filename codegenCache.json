@@ -1,3 +1,10 @@
 {
-  "easy_private_voting_contract-EasyPrivateVoting.json": "4662c1c3f60516d75a615dd7f04c52b2c8536e641e8ad3d3f25a052a48d7ed40"
+  "easy_private_voting_contract-EasyPrivateVoting.json": {
+    "contractName": "EasyPrivateVoting",
+    "hash": "c71ab14ac320878ed8818b6e8b7635600fe02e14f5ab45281a76340ff670cece"
+  },
+  "easy_private_voting_contract-NoteSharing.json": {
+    "contractName": "NoteSharing",
+    "hash": "6a9900079a4f7d0b0a1d269450cc1ec83fba9022c8558d14df06eb554bfd366d"
+  }
 }

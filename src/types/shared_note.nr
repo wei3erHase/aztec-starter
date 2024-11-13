@@ -19,14 +19,14 @@ use dep::aztec::{
 #[note]
 #[derive(Serialize, Deserialize)]
 pub struct SharedNote {
-    alice: AztecAddress,        // msg_sender
-    bob: AztecAddress,          // inputted by msg_sender
+    alice: AztecAddress,         // msg_sender
+    bob: AztecAddress,           // inputted by msg_sender
     shared_nullifier_key: Field, // oracle::random
-    isAlice: bool
+    isAlice: bool                // NOTE: added to avoid duplicate notes
 }
 
 /// @notice Declare the length of the note.
-global SHARED_NOTE_LEN: Field = 3;
+global SHARED_NOTE_LEN: Field = 4;
 
 impl SharedNote {
     pub fn new(

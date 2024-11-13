@@ -37,6 +37,7 @@ contract NoteSharing {
 */
 
     // Declaring the slots for the notes
+    // NOTE: unused variable, inherited from previous implementation
     global SHARED_NOTE_SLOT = 1;
 
     // Declaring storage
@@ -65,14 +66,15 @@ contract NoteSharing {
             .set_limit(1);
 
         let notes = private_values.get_notes(options);
-        // assert(notes.len() == 0, "Note already exists");
+        // NOTE: assertion can be bypassed by Alice "forgetting" her previous note with Bob.
+        assert(notes.len() == 0, "Note already exists");
 
         let random_field = random();
-
         let mut shared_note = SharedNote::new(alice, bob, random_field);
         
         let alice_ovpk_m = get_public_keys(alice).ovpk_m;
 
+        // NOTE: create a note for Alice (recipient)
         storage.shared_notes.insert(&mut shared_note).emit(encode_and_encrypt_note(
             &mut context,
             alice_ovpk_m,
@@ -80,8 +82,7 @@ contract NoteSharing {
             alice
         ));
 
-        shared_note.shared_nullifier_key += 1;
-
+        // NOTE: create a note for Bob (recipient)
         storage.shared_notes.insert(&mut shared_note).emit(encode_and_encrypt_note(
             &mut context,
             alice_ovpk_m,
@@ -89,6 +90,7 @@ contract NoteSharing {
             alice
         ));
 
+        // NOTE: uncomment for checking correct re-build of the Contract
         // assert(false, "re-built");
         
     }
@@ -142,10 +144,9 @@ contract NoteSharing {
         assert(popped_notes.len() == 1, "Note not removed");
     }
 
-    // ///@notice Computes note hash and nullifier.
-    // // unconstrained fn compute_note_hash_and_nullifier(contract_address: AztecAddress, nonce: Field, storage_slot: Field, preimage: [Field; SHARED_NOTE_LEN]) -> pub [Field; 4] {
-    // //     let note_header = NoteHeader::new(contract_address, nonce, storage_slot);
-    // //     note_utils::compute_note_hash_and_nullifier(SharedNoteMethods, note_header, preimage)
-    // // }
+    pub(crate) unconstrained fn nullifier_of_private(owner: AztecAddress) -> pub Field {
+        // TODO: implement this method
+        0
+    }
 }
 

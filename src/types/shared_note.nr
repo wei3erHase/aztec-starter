@@ -19,9 +19,9 @@ use dep::aztec::{
 #[note]
 #[derive(Serialize, Deserialize)]
 pub struct SharedNote {
-    alice: AztecAddress,
-    bob: AztecAddress,
-    shared_nullifier_key: Field
+    alice: AztecAddress,        // msg_sender
+    bob: AztecAddress,          // inputted by msg_sender
+    shared_nullifier_key: Field // oracle::random
 }
 
 /// @notice Declare the length of the note.

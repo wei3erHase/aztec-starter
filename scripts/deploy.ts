@@ -1,4 +1,4 @@
-import { EasyPrivateVotingContractArtifact, EasyPrivateVotingContract } from "../src/artifacts/EasyPrivateVoting.js"
+import { NoteSharingContractArtifact, NoteSharingContract } from "../src/artifacts/NoteSharing.js"
 import { AccountWallet, CompleteAddress, ContractDeployer, createDebugLogger, Fr, PXE, waitForPXE, TxStatus, createPXEClient, getContractInstanceFromDeployParams, DebugLogger } from "@aztec/aztec.js";
 import { getSchnorrAccount } from '@aztec/accounts/schnorr';
 import { AztecAddress, deriveSigningKey } from '@aztec/circuits.js';
@@ -28,11 +28,10 @@ async function main() {
     let salt = Fr.random();
 
     let schnorrAccount = await getSchnorrAccount(pxe, secretKey, deriveSigningKey(secretKey), salt);
-    const { address, publicKeys, partialAddress } = schnorrAccount.getCompleteAddress();
     let tx = await schnorrAccount.deploy().wait();
     let wallet = await schnorrAccount.getWallet();
     
-    const votingContract = await EasyPrivateVotingContract.deploy(wallet, address).send().deployed();
+    const votingContract = await NoteSharingContract.deploy(wallet).send().deployed();
     logger.info(`Voting Contract deployed at: ${votingContract.address}`);
 }
 

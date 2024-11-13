@@ -1,4 +1,4 @@
-import { EasyPrivateVotingContractArtifact, EasyPrivateVotingContract } from "../src/artifacts/EasyPrivateVoting.js"
+import { NoteSharingContractArtifact, NoteSharingContract } from "../src/artifacts/NoteSharing.js"
 import { AccountWallet, CompleteAddress, ContractDeployer, createDebugLogger, Fr, PXE, waitForPXE, TxStatus, createPXEClient, getContractInstanceFromDeployParams, DebugLogger } from "@aztec/aztec.js";
 import { getSchnorrAccount } from '@aztec/accounts/schnorr';
 import { AztecAddress, deriveSigningKey } from '@aztec/circuits.js';
@@ -12,6 +12,9 @@ const setupSandbox = async () => {
     return pxe;
 };
 
+// NOTE: result of `yarn deploy`
+const deployedContract = AztecAddress.fromString('0x242e818979aff782407763d3f1de375a3150d510721c71b10a16f114473f7d94');
+
 async function main() {
 
     let pxe: PXE;
@@ -23,17 +26,20 @@ async function main() {
 
     pxe = await setupSandbox();
     wallets = await getInitialTestAccountsWallets(pxe);
-
-    let secretKey = Fr.random();
-    let salt = Fr.random();
-
-    let schnorrAccount = await getSchnorrAccount(pxe, secretKey, deriveSigningKey(secretKey), salt);
-    const { address, publicKeys, partialAddress } = schnorrAccount.getCompleteAddress();
-    let tx = await schnorrAccount.deploy().wait();
-    let wallet = await schnorrAccount.getWallet();
     
-    const votingContract = await EasyPrivateVotingContract.deploy(wallet, address).send().deployed();
-    logger.info(`Voting Contract deployed at: ${votingContract.address}`);
+    const votingContract = await NoteSharingContract.at(deployedContract, wallets[0]);
+    
+    console.log('alice - bob setup');
+    console.log('alice action');
+    await votingContract.withWallet(wallets[0]).methods.create_and_share_note(wallets[1].getAddress()).send().wait();
+    console.log('bob action');
+    await votingContract.withWallet(wallets[1]).methods.bob_action(wallets[0].getAddress()).send().wait();
+
+    console.log('alice - alice setup');
+    console.log('alice action');
+    await votingContract.withWallet(wallets[0]).methods.create_and_share_note(wallets[1].getAddress()).send().wait();
+    console.log('alice 2nd action');
+    await votingContract.withWallet(wallets[0]).methods.alice_action(wallets[1].getAddress()).send().wait();
 }
 
 main();

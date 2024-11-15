@@ -70,23 +70,22 @@ contract NoteSharing {
         assert(notes.len() == 0, "Note already exists");
 
         let random_field = random();
-        let mut shared_note = SharedNote::new(alice, bob, random_field, true);
+        let mut shared_note = SharedNote::new(alice, bob, random_field);
         
         let alice_ovpk_m = get_public_keys(alice).ovpk_m;
 
-        // NOTE: create a note for Alice (recipient)
-        storage.shared_notes.insert(&mut shared_note).emit(encode_and_encrypt_note(
+        let noteEmission = storage.shared_notes.insert(&mut shared_note);
+
+        // NOTE: emit the note for Alice (recipient)
+        noteEmission.emit(encode_and_encrypt_note(
             &mut context,
             alice_ovpk_m,
             alice,
             AztecAddress::zero() // unused
         ));
 
-        // NOTE: modifies the note in order to insert it twice in the storage
-        shared_note.isAlice = false;
-
-        // NOTE: create a note for Bob (recipient)
-        storage.shared_notes.insert(&mut shared_note).emit(encode_and_encrypt_note(
+        // NOTE: emit the note for Bob (recipient)
+        noteEmission.emit(encode_and_encrypt_note(
             &mut context,
             alice_ovpk_m,
             bob,

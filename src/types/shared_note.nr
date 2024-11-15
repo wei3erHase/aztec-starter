@@ -22,7 +22,6 @@ pub struct SharedNote {
     alice: AztecAddress,         // msg_sender
     bob: AztecAddress,           // inputted by msg_sender
     shared_nullifier_key: Field, // oracle::random
-    isAlice: bool                // NOTE: added to avoid duplicate notes
 }
 
 /// @notice Declare the length of the note.
@@ -33,13 +32,11 @@ impl SharedNote {
         alice: AztecAddress,
         bob: AztecAddress,
         shared_nullifier_key: Field,
-        isAlice: bool
     ) -> Self {
         SharedNote {
             alice,
             bob,
             shared_nullifier_key,
-            isAlice,
             header: NoteHeader::empty()
         }
     }

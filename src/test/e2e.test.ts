@@ -78,8 +78,7 @@ import {
         })
         
         it("should create two notes", async () => {
-            expect(sharedNotes.length).toBe(2); // fails
-            // expect(sharedOutNotes.length).toBe(2); // works
+            expect(sharedNotes.length).toBe(2);
         })
 
         it("should create a note for alice with the correct parameters", async () => {
@@ -94,7 +93,7 @@ import {
 
             expect(aliceParam).toEqual(aliceAddress);
             expect(bobParam).toEqual(bobAddress);
-            expect(noteOwner).toEqual(aliceAddress); // fails (received: bobAddress)
+            expect(noteOwner).toEqual(aliceAddress);
             
             shared_key_nullifier_alice = sharedNotes[0].note.items[2];
         })
@@ -107,7 +106,7 @@ import {
             const aliceAddress = alice.getAddress();
             const bobAddress = bob.getAddress();
 
-            expect(aliceParam).toEqual(aliceAddress); // fails (received: unknown address)
+            expect(aliceParam).toEqual(aliceAddress);
             expect(bobParam).toEqual(bobAddress);
             expect(noteOwner).toEqual(bobAddress);
 
@@ -121,16 +120,14 @@ import {
             );
         });
         
-        it.skip("should revert if the note already exists", async () => {
+        it("should revert if the note already exists", async () => {
             const txReceipt = sharedNoteContract
             .withWallet(alice)
             .methods.create_and_share_note(bob.getAddress())
             .simulate();
 
             await expect(txReceipt).rejects.toThrow(
-                // NOTE: fails as error string isn't exactly the same
-                // "(host http://localhost:8080) (method pxe_simulateTx) (code 400)" is missing
-                "(JSON-RPC PROPAGATED) Assertion failed: Note already exists 'notes.len() == 0'"
+                new RegExp("Note already exists")
             );
         })
     })
@@ -139,16 +136,14 @@ import {
         let sharedNotes: ExtendedNote[]; 
         let nullifiers: Fr[];
 
-        it.skip("should revert if the note doesnt exist", async () => {
+        it("should revert if the note doesnt exist", async () => {
             const txReceipt = sharedNoteContract
             .withWallet(bob)
             .methods.bob_action(randomAccount.getAddress())
             .simulate();
 
             await expect(txReceipt).rejects.toThrow(
-                // NOTE: fails as error string isn't exactly the same
-                // "(host http://localhost:8080) (method pxe_simulateTx) (code 400)" is missing
-                "(JSON-RPC PROPAGATED) Assertion failed: Note not found 'notes.len() == 1'"
+                new RegExp("Note not found")
             );
         })
 
@@ -202,16 +197,14 @@ import {
             expect(sharedNotes.length).toBe(2);
         })
 
-        it.skip("should revert if the note doesnt exist", async () => {
+        it("should revert if the note doesnt exist", async () => {
             const txReceipt = sharedNoteContract
             .withWallet(alice)
             .methods.alice_action(randomAccount.getAddress())
             .simulate();
 
             await expect(txReceipt).rejects.toThrow(
-                // NOTE: fails as error string isn't exactly the same
-                // "(host http://localhost:8080) (method pxe_simulateTx) (code 400)" is missing
-                "(JSON-RPC PROPAGATED) Assertion failed: Note not found 'notes.len() == 1'"
+                new RegExp("Note not found")
             );
         })
 

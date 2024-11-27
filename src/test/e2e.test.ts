@@ -186,41 +186,42 @@ import {
         })
     })
 
-    // describe("bob_action", () => {
-    //     let sharedNotes: ExtendedNote[]; 
-    //     let nullifiers: Fr[];
+    describe("bob_action", () => {
+      let noteHashes: Fr[];
+      let nullifiers: Fr[];
 
-    //     it("should revert if the note doesnt exist", async () => {
-    //         const txReceipt = sharedNoteContract
-    //         .withWallet(bob)
-    //         .methods.bob_action(randomAccount.getAddress())
-    //         .simulate();
+        // TODO: fix RegExp
+        it.skip("should revert if the note doesnt exist", async () => {
+            const txReceipt = sharedNoteContract
+            .withWallet(bob)
+            .methods.bob_action(randomAccount.getAddress())
+            .simulate();
 
-    //         await expect(txReceipt).rejects.toThrow(
-    //             new RegExp("Note not found")
-    //         );
-    //     })
+            await expect(txReceipt).rejects.toThrow(
+                new RegExp("Note not found")
+            );
+        })
 
-    //     it("should not revert", async () => {
-    //         const txReceipt = await sharedNoteContract
-    //         .withWallet(bob)
-    //         .methods.bob_action(
-    //             alice.getAddress(),
-    //         )
-    //         .send()
-    //         .wait({debug: true});
+        it("should not revert", async () => {
+            const txReceipt = await sharedNoteContract
+            .withWallet(bob)
+            .methods.bob_action(
+                alice.getAddress(),
+            )
+            .send()
+            .wait({debug: true});
 
-    //         sharedNotes = txReceipt.debugInfo?.visibleIncomingNotes!;
-    //         nullifiers = txReceipt.debugInfo?.nullifiers!;
+            noteHashes = txReceipt.debugInfo?.noteHashes!;
+            nullifiers = txReceipt.debugInfo?.nullifiers!;
 
-    //         expect(txReceipt.status).toBe("success");        
-    //     })
+            expect(txReceipt.status).toBe("success");        
+        })
 
-    //     it("should nullify the note", async () => {
-    //        expect(sharedNotes.length).toBe(0);
-    //        expect(nullifiers.length).toBe(2); // TODO: why 2???
-    //     })
-    // })
+        it("should nullify the note", async () => {
+           expect(noteHashes.length).toBe(0);
+           expect(nullifiers.length).toBe(2); // TODO: why 2??
+        })
+    })
 
     // describe("alice_action", () => {
     //     let sharedNotes: ExtendedNote[]; 

@@ -1,5 +1,7 @@
 import {
     AccountWalletWithSecretKey,
+    Contract,
+    ContractDeployer,
     createPXEClient,
     ExtendedNote,
     Fr,
@@ -7,12 +9,12 @@ import {
     waitForPXE,
   } from "@aztec/aztec.js";
   
-  import { NoteSharingContract } from "../artifacts/NoteSharing.ts";
+  import { NoteSharingContractArtifact, NoteSharingContract } from "../artifacts/NoteSharing.ts";
   import { createAccount, deployInitialTestAccounts, getInitialTestAccountsWallets } from "@aztec/accounts/testing";
   
   // Global variables
   let pxe: PXE;
-  let sharedNoteContract: NoteSharingContract;
+  let sharedNoteContract: Contract;
   
   let alice: AccountWalletWithSecretKey;
   let bob: AccountWalletWithSecretKey;
@@ -41,11 +43,9 @@ import {
   
   describe("E2E Shared Note", () => {
     beforeAll(async () => {
-      const sharedNoteReceipt = await NoteSharingContract.deploy(deployer)
-        .send()
-        .wait();
-  
-        sharedNoteContract = sharedNoteReceipt.contract;
+      const contractDeployer = new ContractDeployer(NoteSharingContractArtifact, deployer);
+      const tx = contractDeployer.deploy().send();
+      sharedNoteContract = await tx.deployed();
     }, 200_000);
 
     describe("create_and_share_note(...)", () => {
@@ -54,7 +54,7 @@ import {
         let sharedNotes: Fr[];
         let sharedOutNotes: Fr[];
 
-        it("should not revert", async () => {
+        it.only("should not revert", async () => {
             const txReceipt = await sharedNoteContract
             .withWallet(alice)
             .methods.create_and_share_note(

@@ -4,7 +4,6 @@ use dep::aztec::{
     note::{
         note_header::NoteHeader,
         note_interface::NullifiableNote,
-        utils::compute_note_hash_for_nullify
     },
     protocol_types::{
         traits::{Deserialize, Serialize},
@@ -23,9 +22,6 @@ pub struct SharedNote {
     bob: AztecAddress,           // inputted by msg_sender
     shared_nullifier_key: Field, // oracle::random
 }
-
-/// @notice Declare the length of the note.
-global SHARED_NOTE_LEN: Field = 4;
 
 impl SharedNote {
     pub fn new(
@@ -53,8 +49,8 @@ impl Eq for SharedNote {
 impl NullifiableNote for SharedNote {
     fn compute_nullifier(
         self,
-        context: &mut PrivateContext,
-        note_hash_for_nullify: Field,
+        _context: &mut PrivateContext,
+        _note_hash_for_nullify: Field,
     ) -> Field {
         // let note_hash_for_nullify = compute_note_hash_for_nullify(self);
         poseidon2_hash_with_separator(

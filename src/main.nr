@@ -4,16 +4,18 @@ use dep::aztec::macros::aztec;
 #[aztec]
 contract NoteSharing {
     
-    use crate::types::shared_note:: {SharedNote, SHARED_NOTE_LEN};
-
+    use crate::types::shared_note:: {SharedNote};
     use dep::aztec::{
         keys::getters::get_public_keys,
-        macros::{functions::{
-            initializer,
-            internal, 
-            private, 
-            public}, 
-        storage::storage},
+        macros::{
+            functions::{
+                initializer,
+                internal,
+                private, 
+                public
+            },
+            storage::storage
+        },
         encrypted_logs::encrypted_note_emission::encode_and_encrypt_note,
         oracle::random::random,
         utils::comparison::Comparator
@@ -35,10 +37,6 @@ contract NoteSharing {
     2) If Alice needs something, and Bob can provide it, she can share a note with Bob, constituting an agreement. Because the note is shared, Alice can cancel the note if Bob doesn't provide what she needs 
        or if she changes her mind before Bob provides it. Bob, in turn, can forbid Alice from cancelling the note if he has already provided what she needed.
 */
-
-    // Declaring the slots for the notes
-    // NOTE: unused variable, inherited from previous implementation
-    global SHARED_NOTE_SLOT = 1;
 
     // Declaring storage
     #[storage]

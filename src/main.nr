@@ -51,26 +51,6 @@ contract NoteSharing {
     fn initialize() {
     }
 
-    #[public]
-    fn some_public_method() {
-        // NOTE: unused function, inherited from previous implementation
-    }
-
-    #[private]
-    fn some_private_method() {
-        // NOTE: unused function, inherited from previous implementation
-    }
-
-    #[public]
-    fn some_public_method_with_arg(address: AztecAddress) {
-        // NOTE: unused function, inherited from previous implementation
-    }
-
-    #[private]
-    fn some_private_method_with_arg(address: AztecAddress) {
-        // NOTE: unused function, inherited from previous implementation
-    }
-
     /// @notice Shares a note with another user.
     /// @param  Bob The address to share the note with.
     #[private]
@@ -89,7 +69,7 @@ contract NoteSharing {
         // NOTE: assertion can be bypassed by Alice "forgetting" her previous note with Bob.
         assert(notes.len() == 0, "Note already exists");
 
-        let random_field = random();
+        let random_field = unsafe { random() };
         let mut shared_note = SharedNote::new(alice, bob, random_field);
         
         let alice_ovpk_m = get_public_keys(alice).ovpk_m;

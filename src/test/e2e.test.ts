@@ -93,30 +93,6 @@ import {
       expect(receiptAfterMined.contract.instance.address).toEqual(deploymentData.address)
     }, 200_000);
 
-    describe.skip("empty public / private methods", () => {
-
-        it("should not revert on public method", async () => {
-            const txReceipt = await sharedNoteContract
-            .withWallet(alice)
-            .methods.some_public_method_with_arg(new Fr(1))
-            .send()
-            .wait({debug: true});
-
-            expect(txReceipt.status).toBe("success");
-        }, 200_000);
-
-        it("should not revert on private method", async () => {
-            const txReceipt = await sharedNoteContract
-            .withWallet(alice)
-            .methods.some_private_method_with_arg(new Fr(1))
-            .send()
-            .wait({debug: true});
-
-            expect(txReceipt.status).toBe("success");
-        }, 200_000);
-
-    });
-
     describe("create_and_share_note(...)", () => {
         let shared_key_nullifier_alice: Fr;
         let shared_key_nullifier_bob: Fr;
@@ -173,15 +149,14 @@ import {
           console.log({logs});
         });
         
-        // NOTE: failing due to the RegExp
-        it.skip("should revert if the note already exists", async () => {
+        it("should revert if the note already exists", async () => {
             const txReceipt = sharedNoteContract
             .withWallet(alice)
             .methods.create_and_share_note(bob.getAddress())
             .simulate();
 
             await expect(txReceipt).rejects.toThrow(
-                new RegExp("Note already exists") // NOTE: fix RegExp
+                new RegExp("Note already exists")
             );
         })
     })
@@ -190,8 +165,7 @@ import {
       let noteHashes: Fr[];
       let nullifiers: Fr[];
 
-        // TODO: fix RegExp
-        it.skip("should revert if the note doesnt exist", async () => {
+        it("should revert if the note doesnt exist", async () => {
             const txReceipt = sharedNoteContract
             .withWallet(bob)
             .methods.bob_action(randomAccount.getAddress())
@@ -223,63 +197,67 @@ import {
         })
     })
 
-    // describe("alice_action", () => {
-    //     let sharedNotes: ExtendedNote[]; 
-    //     let sharedNotesAfterNullification: ExtendedNote[];
+    describe("alice_action", () => {
+        let noteHashes: Fr[];
+        let nullifiers: Fr[];
 
-    //     beforeAll(async () => {
-    //         // NOTE: redeploying to ignore previous notes and nullifiers
-    //         const sharedNoteReceipt = await NoteSharingContract.deploy(deployer)
-    //           .send()
-    //           .wait();
+        beforeAll(async () => {
+            // NOTE: redeploying to ignore previous notes and nullifiers
+            const sharedNoteReceipt = await NoteSharingContract.deploy(deployer)
+              .send()
+              .wait();
         
-    //         sharedNoteContract = sharedNoteReceipt.contract;
+            sharedNoteContract = sharedNoteReceipt.contract;
 
-    //         // Because we nullified the note in the previous test, we need to create a new one.
-    //         // NOTE: fails w/o redeploy, didn't nullify Alice's note
-    //         const txReceipt = await sharedNoteContract
-    //         .withWallet(alice)
-    //         .methods.create_and_share_note(
-    //             bob.getAddress(),
-    //         )
-    //         .send()
-    //         .wait({debug: true});
+            // Because we nullified the note in the previous test, we need to create a new one.
+            // NOTE: fails w/o redeploy, didn't nullify Alice's note
+            const txReceipt = await sharedNoteContract
+            .withWallet(alice)
+            .methods.create_and_share_note(
+                bob.getAddress(),
+            )
+            .send()
+            .wait({debug: true});
 
-    //         sharedNotes = txReceipt.debugInfo?.visibleIncomingNotes!;
-    //     }, 200_000);
+            noteHashes = txReceipt.debugInfo?.noteHashes!;
+        }, 200_000);
 
-    //     it("should have existing notes", async () => {
-    //         expect(sharedNotes.length).toBe(2);
-    //     })
+        it("should have existing notes", async () => {
+            expect(noteHashes.length).toBe(1);
+        })
 
-    //     it("should revert if the note doesnt exist", async () => {
-    //         const txReceipt = sharedNoteContract
-    //         .withWallet(alice)
-    //         .methods.alice_action(randomAccount.getAddress())
-    //         .simulate();
+        it("should revert if the note doesnt exist", async () => {
+            const txReceipt = sharedNoteContract
+            .withWallet(alice)
+            .methods.alice_action(randomAccount.getAddress())
+            .simulate();
 
-    //         await expect(txReceipt).rejects.toThrow(
-    //             new RegExp("Note not found")
-    //         );
-    //     })
+            await expect(txReceipt).rejects.toThrow(
+                new RegExp("Note not found")
+            );
+        })
 
-    //     it("should not revert", async () => {
-    //         const txReceipt = await sharedNoteContract
-    //         .withWallet(alice)
-    //         .methods.alice_action(
-    //             bob.getAddress(),
-    //         )
-    //         .send()
-    //         .wait({debug: true});
+        it("should not revert", async () => {
+            const txReceipt = await sharedNoteContract
+            .withWallet(alice)
+            .methods.alice_action(
+                bob.getAddress(),
+            )
+            .send()
+            .wait({debug: true});
 
-    //         sharedNotesAfterNullification = txReceipt.debugInfo?.visibleIncomingNotes!;
+            expect(txReceipt.status).toBe("success");  
+        })
 
-    //         expect(txReceipt.status).toBe("success");  
-    //     })
+        it("should avoid bob from calling his method", async () => {
+          const txReceipt = sharedNoteContract
+          .withWallet(bob)
+          .methods.bob_action(alice.getAddress())
+          .simulate();
 
-    //     it("should nullify the note", async () => {
-    //         expect(sharedNotesAfterNullification.length).toBe(0);
-    //     })
-    // })
-    // });
+          await expect(txReceipt).rejects.toThrow(
+              new RegExp("Note not found")
+          );
+        })
+    })
   });

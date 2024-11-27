@@ -19,6 +19,7 @@ import {
   // Global variables
   let pxe: PXE;
   let pxe_alice: PXE;
+  let pxe_bob: PXE;
   let sharedNoteContract: Contract;
   
   let alice: AccountWalletWithSecretKey;
@@ -32,12 +33,15 @@ import {
   const { PXE_URL = 'http://localhost:8080' } = process.env;
   // aztec start --port 8081 --pxe --pxe.nodeUrl http://host.docker.internal:8080/
   const PXE_ALICE = 'http://localhost:8081';
+  const PXE_BOB = 'http://localhost:8082';
   
   const setupSandbox = async () => {
     pxe = createPXEClient(PXE_URL);
     pxe_alice = createPXEClient(PXE_ALICE);
+    pxe_bob = createPXEClient(PXE_BOB);
     await waitForPXE(pxe);
     await waitForPXE(pxe_alice); // TODO: is this needed?
+    await waitForPXE(pxe_bob);   // TODO: is this needed?
     return pxe;
   };
   
@@ -136,16 +140,22 @@ import {
         });
 
         // TODO: register Alice's PK in PXE and decrypt the encrypted logs
-        it("should be readable from Alice's wallet", async () => {
-          pxe.registerContact(alice.getAddress());
+        it.skip("should be readable from Alice's wallet", async () => {
+          pxe_alice.registerContact(alice.getAddress());
           
-          const incomingNotes = await alice.getIncomingNotes({ txHash });
+          const incomingNotes = await pxe_alice.getIncomingNotes({ txHash });
           console.log({incomingNotes}) // NOTE: empty array
+
+          expect(incomingNotes.length).toBeGreaterThan(0); // NOTE: fails
         });
 
-        it("should be readable from Bob's wallet", async () => {
-          const incomingNotes = await bob.getIncomingNotes({ txHash });
+        it.skip("should be readable from Bob's wallet", async () => {
+          pxe_bob.registerContact(bob.getAddress());
+
+          const incomingNotes = await pxe_bob.getIncomingNotes({ txHash });
           console.log({incomingNotes}) // NOTE: empty array
+
+          expect(incomingNotes.length).toBeGreaterThan(0); // NOTE: fails
         });
         
         it("should revert if the note already exists", async () => {

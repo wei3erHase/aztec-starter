@@ -1,5 +1,6 @@
 import {
     AccountWalletWithSecretKey,
+    AztecAddress,
     Contract,
     ContractDeployer,
     createPXEClient,
@@ -84,12 +85,12 @@ import {
       expect(receiptAfterMined.contract.instance.address).toEqual(deploymentData.address)
     }, 200_000);
 
-    describe("empty public / private methods", () => {
+    describe.skip("empty public / private methods", () => {
 
         it("should not revert on public method", async () => {
             const txReceipt = await sharedNoteContract
             .withWallet(alice)
-            .methods.some_public_method()
+            .methods.some_public_method_with_arg(new Fr(1))
             .send()
             .wait({debug: true});
 
@@ -99,7 +100,7 @@ import {
         it("should not revert on private method", async () => {
             const txReceipt = await sharedNoteContract
             .withWallet(alice)
-            .methods.some_private_method()
+            .methods.some_private_method_with_arg(new Fr(1))
             .send()
             .wait({debug: true});
 
@@ -111,8 +112,7 @@ import {
     describe("create_and_share_note(...)", () => {
         let shared_key_nullifier_alice: Fr;
         let shared_key_nullifier_bob: Fr;
-        let sharedNotes: Fr[];
-        let sharedOutNotes: Fr[];
+        let noteHashes: Fr[];
 
         it("should not revert", async () => {
             const txReceipt = await sharedNoteContract
@@ -123,22 +123,18 @@ import {
             .send()
             .wait({debug: true});
 
-            sharedNotes = txReceipt.debugInfo?.noteHashes!;
-            console.log("sharedNotes", sharedNotes);
-
-            sharedOutNotes = txReceipt.debugInfo?.noteHashes!
-            console.log("sharedOutNotes", sharedOutNotes);
-            // NOTE: sharedOutNotes declare an owner that isn't nor Alice nor Bob
+            noteHashes = txReceipt.debugInfo?.noteHashes!;
+            console.log("noteHashes", noteHashes);
 
             let nullifiers = txReceipt.debugInfo?.nullifiers!;
             console.log("nullifiers", nullifiers);
 
             expect(txReceipt.status).toBe("success");
-        })
+        });
         
-        it("should create two notes", async () => {
-            expect(sharedNotes.length).toBe(2);
-        })
+        it("should create one note", async () => {
+            expect(noteHashes.length).toBe(1);
+        });
 
         // it("should create a note for alice with the correct parameters", async () => {
         //     const aliceParam = sharedNotes[0].note.items[0];

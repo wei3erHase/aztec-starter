@@ -61,6 +61,16 @@ contract NoteSharing {
         // NOTE: unused function, inherited from previous implementation
     }
 
+    #[public]
+    fn some_public_method_with_arg(address: AztecAddress) {
+        // NOTE: unused function, inherited from previous implementation
+    }
+
+    #[private]
+    fn some_private_method_with_arg(address: AztecAddress) {
+        // NOTE: unused function, inherited from previous implementation
+    }
+
     /// @notice Shares a note with another user.
     /// @param  Bob The address to share the note with.
     #[private]
@@ -91,7 +101,7 @@ contract NoteSharing {
             &mut context,
             alice_ovpk_m,
             alice,
-            AztecAddress::zero() // unused
+            alice
         ));
 
         // NOTE: emit the note for Bob (recipient)
@@ -99,7 +109,7 @@ contract NoteSharing {
             &mut context,
             alice_ovpk_m,
             bob,
-            AztecAddress::zero() // unused
+            alice
         ));
 
         // NOTE: uncomment for checking correct re-build of the Contract

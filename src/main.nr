@@ -51,6 +51,16 @@ contract NoteSharing {
     fn initialize() {
     }
 
+    #[public]
+    fn some_public_method() {
+        // NOTE: unused function, inherited from previous implementation
+    }
+
+    #[private]
+    fn some_private_method() {
+        // NOTE: unused function, inherited from previous implementation
+    }
+
     /// @notice Shares a note with another user.
     /// @param  Bob The address to share the note with.
     #[private]

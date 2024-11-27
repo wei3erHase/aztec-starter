@@ -5,7 +5,9 @@ import {
     createPXEClient,
     ExtendedNote,
     Fr,
+    getContractInstanceFromDeployParams,
     PXE,
+    TxStatus,
     waitForPXE,
   } from "@aztec/aztec.js";
   
@@ -20,6 +22,7 @@ import {
   let bob: AccountWalletWithSecretKey;
   let deployer: AccountWalletWithSecretKey;
   let randomAccount: AccountWalletWithSecretKey;
+  let salt: Fr;
   
   const { PXE_URL = 'http://localhost:8080' } = process.env;
   
@@ -43,10 +46,67 @@ import {
   
   describe("E2E Shared Note", () => {
     beforeAll(async () => {
-      const contractDeployer = new ContractDeployer(NoteSharingContractArtifact, deployer);
-      const tx = contractDeployer.deploy().send();
-      sharedNoteContract = await tx.deployed();
     }, 200_000);
+    
+    it("should deploy the contract", async () => {
+      salt = Fr.random();
+
+      const deploymentData = getContractInstanceFromDeployParams(NoteSharingContractArtifact,
+        {
+            constructorArgs: [],
+            salt,
+            deployer: deployer.getAddress()
+        });
+
+      const contractDeployer = new ContractDeployer(NoteSharingContractArtifact, deployer);
+      const tx = contractDeployer.deploy().send({ contractAddressSalt: salt });
+      
+      const receipt = await tx.getReceipt();
+      sharedNoteContract = await tx.deployed();
+      
+      expect(receipt).toEqual(
+        expect.objectContaining({
+            status: TxStatus.PENDING,
+            error: ''
+        }),
+      );
+
+      const receiptAfterMined = await tx.wait({ wallet: deployer });
+
+      expect(await pxe.getContractInstance(deploymentData.address)).toBeDefined();
+      expect(await pxe.isContractPubliclyDeployed(deploymentData.address)).toBeTruthy();
+      expect(receiptAfterMined).toEqual(
+          expect.objectContaining({
+              status: TxStatus.SUCCESS,
+          }),
+      );
+
+      expect(receiptAfterMined.contract.instance.address).toEqual(deploymentData.address)
+    }, 200_000);
+
+    describe("empty public / private methods", () => {
+
+        it("should not revert on public method", async () => {
+            const txReceipt = await sharedNoteContract
+            .withWallet(alice)
+            .methods.some_public_method()
+            .send()
+            .wait({debug: true});
+
+            expect(txReceipt.status).toBe("success");
+        }, 200_000);
+
+        it("should not revert on private method", async () => {
+            const txReceipt = await sharedNoteContract
+            .withWallet(alice)
+            .methods.some_private_method()
+            .send()
+            .wait({debug: true});
+
+            expect(txReceipt.status).toBe("success");
+        }, 200_000);
+
+    });
 
     describe("create_and_share_note(...)", () => {
         let shared_key_nullifier_alice: Fr;
@@ -54,7 +114,7 @@ import {
         let sharedNotes: Fr[];
         let sharedOutNotes: Fr[];
 
-        it.only("should not revert", async () => {
+        it("should not revert", async () => {
             const txReceipt = await sharedNoteContract
             .withWallet(alice)
             .methods.create_and_share_note(

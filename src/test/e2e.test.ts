@@ -136,17 +136,16 @@ import {
         });
 
         // TODO: register Alice's PK in PXE and decrypt the encrypted logs
-        it("should be readable from Alice's PXE", async () => {
-          const txReceipt = await pxe_alice.getTxReceipt(txHash);
+        it("should be readable from Alice's wallet", async () => {
+          pxe.registerContact(alice.getAddress());
+          
+          const incomingNotes = await alice.getIncomingNotes({ txHash });
+          console.log({incomingNotes}) // NOTE: empty array
+        });
 
-          console.log(txReceipt);
-          console.log(txReceipt.debugInfo?.noteHashes); // NOTE: undefined
-
-          const effect = await pxe_alice.getTxEffect(txHash)
-          console.log({effect});
-
-          const logs = effect?.data.noteEncryptedLogs.functionLogs[0].logs[0].data;
-          console.log({logs});
+        it("should be readable from Bob's wallet", async () => {
+          const incomingNotes = await bob.getIncomingNotes({ txHash });
+          console.log({incomingNotes}) // NOTE: empty array
         });
         
         it("should revert if the note already exists", async () => {

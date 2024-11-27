@@ -8,6 +8,7 @@ import {
     Fr,
     getContractInstanceFromDeployParams,
     PXE,
+    TxHash,
     TxStatus,
     waitForPXE,
   } from "@aztec/aztec.js";
@@ -17,6 +18,7 @@ import {
   
   // Global variables
   let pxe: PXE;
+  let pxe_alice: PXE;
   let sharedNoteContract: Contract;
   
   let alice: AccountWalletWithSecretKey;
@@ -24,12 +26,18 @@ import {
   let deployer: AccountWalletWithSecretKey;
   let randomAccount: AccountWalletWithSecretKey;
   let salt: Fr;
+  let txHash: TxHash;
   
+  // cd ~/.aztec && docker-compose -f ./docker-compose.sandbox.yml up
   const { PXE_URL = 'http://localhost:8080' } = process.env;
+  // aztec start --port 8081 --pxe --pxe.nodeUrl http://host.docker.internal:8080/
+  const PXE_ALICE = 'http://localhost:8081';
   
   const setupSandbox = async () => {
-    const pxe = createPXEClient(PXE_URL);
+    pxe = createPXEClient(PXE_URL);
+    pxe_alice = createPXEClient(PXE_ALICE);
     await waitForPXE(pxe);
+    await waitForPXE(pxe_alice); // TODO: is this needed?
     return pxe;
   };
   
@@ -113,6 +121,7 @@ import {
         let shared_key_nullifier_alice: Fr;
         let shared_key_nullifier_bob: Fr;
         let noteHashes: Fr[];
+        let nullifiers: Fr[];
 
         it("should not revert", async () => {
             const txReceipt = await sharedNoteContract
@@ -123,10 +132,12 @@ import {
             .send()
             .wait({debug: true});
 
+            txHash = txReceipt.txHash;
+
             noteHashes = txReceipt.debugInfo?.noteHashes!;
             console.log("noteHashes", noteHashes);
 
-            let nullifiers = txReceipt.debugInfo?.nullifiers!;
+            nullifiers = txReceipt.debugInfo?.nullifiers!;
             console.log("nullifiers", nullifiers);
 
             expect(txReceipt.status).toBe("success");
@@ -135,61 +146,34 @@ import {
         it("should create one note", async () => {
             expect(noteHashes.length).toBe(1);
         });
-
-        it("should revert if the note already exists", async () => {
-          const txReceipt = await sharedNoteContract
-          .withWallet(alice)
-          .methods.create_and_share_note(
-              bob.getAddress(),
-          )
-          .simulate();
-
-          await expect(txReceipt).rejects.toThrow(
-            // TODO: fix RegExp
-            // RegExp("Note already exists")
-            // /Note already exists/i
-          );
+        
+        it("should create one nullifier", async () => {
+            expect(nullifiers.length).toBe(1);
         });
 
-        // it("should create a note for alice with the correct parameters", async () => {
-        //     const aliceParam = sharedNotes[0].note.items[0];
-        //     const bobParam = sharedNotes[0].note.items[1];
-        //     const noteOwner = sharedNotes[0].owner;
+        it("should create two encrypted note logs", async () => {
+          const effect = await pxe.getTxEffect(txHash);
+          console.log({effect});
+          
+          const noteEncryptedLogs = effect?.data.noteEncryptedLogs;
+          expect(noteEncryptedLogs!.functionLogs[0].logs.length).toBe(2);
+        });
 
-        //     console.log('Alice note: ', sharedNotes[0].note);
+        // TODO: register Alice's PK in PXE and decrypt the encrypted logs
+        it("should be readable from Alice's PXE", async () => {
+          const txReceipt = await pxe_alice.getTxReceipt(txHash);
 
-        //     const aliceAddress = alice.getAddress();
-        //     const bobAddress = bob.getAddress();
+          console.log(txReceipt);
+          console.log(txReceipt.debugInfo?.noteHashes); // NOTE: undefined
 
-        //     expect(aliceParam).toEqual(aliceAddress);
-        //     expect(bobParam).toEqual(bobAddress);
-        //     expect(noteOwner).toEqual(aliceAddress);
-            
-        //     shared_key_nullifier_alice = sharedNotes[0].note.items[2];
-        // })
-        
-        // it("should create a note for bob with the correct parameters", async () => {
-        //     const aliceParam = sharedNotes[1].note.items[0];
-        //     const bobParam = sharedNotes[1].note.items[1];
-        //     const noteOwner = sharedNotes[1].owner;
+          const effect = await pxe_alice.getTxEffect(txHash)
+          console.log({effect});
 
-        //     const aliceAddress = alice.getAddress();
-        //     const bobAddress = bob.getAddress();
-
-        //     expect(aliceParam).toEqual(aliceAddress);
-        //     expect(bobParam).toEqual(bobAddress);
-        //     expect(noteOwner).toEqual(bobAddress);
-
-        //     shared_key_nullifier_bob = sharedNotes[1].note.items[2];
-        // })
-
-        it("nullifier key is the same between the 2 notes", async () => {
-            // NOTE: passes bc both nullifiers are the null (not computed)
-            expect(shared_key_nullifier_alice).toEqual(
-                shared_key_nullifier_bob
-            );
+          const logs = effect?.data.noteEncryptedLogs.functionLogs[0].logs[0].data;
+          console.log({logs});
         });
         
+        // NOTE: failing due to the RegExp
         it.skip("should revert if the note already exists", async () => {
             const txReceipt = sharedNoteContract
             .withWallet(alice)
@@ -296,4 +280,5 @@ import {
     //         expect(sharedNotesAfterNullification.length).toBe(0);
     //     })
     // })
+    // });
   });

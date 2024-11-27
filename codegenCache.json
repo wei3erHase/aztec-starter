@@ -1,0 +1,18 @@
+{
+  "easy_private_voting_contract-EasyPrivateVoting.json": {
+    "contractName": "EasyPrivateVoting",
+    "hash": "2ea46da97748d4468818211a1afc9e3ab68fd589b72ee2c55a4d7090289c7fc1"
+  },
+  "easy_private_voting_contract-NoteSharing.json": {
+    "contractName": "NoteSharing",
+    "hash": "916828a69081afc646f73593b35cbb65adbe4a378a9834c1e5c22424d883bce3"
+  },
+  "easy_private_voting_contract-TestBoilerplate.json": {
+    "contractName": "TestBoilerplate",
+    "hash": "da2b27a9ada83b228b8e8156dd2e4997eb186217a86c94d67a9d454df0aa922a"
+  },
+  "shared_note-NoteSharing.json": {
+    "contractName": "NoteSharing",
+    "hash": "6d1fdc659fe4ff15b6615a80e6d54bd34ee8fe6b70daf07a93023ad83992c53e"
+  }
+}

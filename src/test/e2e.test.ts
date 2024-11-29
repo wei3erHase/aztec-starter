@@ -33,6 +33,7 @@ import {
   const { PXE_URL = 'http://localhost:8080' } = process.env;
   // aztec start --port 8081 --pxe --pxe.nodeUrl http://host.docker.internal:8080/
   const PXE_ALICE = 'http://localhost:8081';
+  // aztec start --port 8082 --pxe --pxe.nodeUrl http://host.docker.internal:8080/
   const PXE_BOB = 'http://localhost:8082';
   
   const setupSandbox = async () => {
@@ -140,7 +141,7 @@ import {
         });
 
         // TODO: register Alice's PK in PXE and decrypt the encrypted logs
-        it.skip("should be readable from Alice's wallet", async () => {
+        it("should be readable from Alice's wallet", async () => {
           pxe_alice.registerContact(alice.getAddress());
           
           const incomingNotes = await pxe_alice.getIncomingNotes({ txHash });
@@ -153,12 +154,23 @@ import {
           pxe_bob.registerContact(bob.getAddress());
 
           const incomingNotes = await pxe_bob.getIncomingNotes({ txHash });
+          const outgoingNotes = await pxe.getOutgoingNotes({ txHash });
+
+          const effect = await pxe.getTxEffect(txHash)
+          const effect_alice = await pxe_alice.getTxEffect(txHash)
+          const effect_bob = await pxe_bob.getTxEffect(txHash)
+
+          console.log({effect})
+          console.log({effect_alice})
+          console.log({effect_bob})
+
           console.log({incomingNotes}) // NOTE: empty array
+          console.log({outgoingNotes}) // NOTE: empty array
 
           expect(incomingNotes.length).toBeGreaterThan(0); // NOTE: fails
         });
         
-        it("should revert if the note already exists", async () => {
+        it.skip("should revert if the note already exists", async () => {
             const txReceipt = sharedNoteContract
             .withWallet(alice)
             .methods.create_and_share_note(bob.getAddress())

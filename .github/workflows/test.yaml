@@ -1,0 +1,42 @@
+name: Aztec Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  setup-and-run:
+    runs-on: [self-hosted, docker]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl bash
+
+      - name: Install Aztec CLI
+        run: |
+          bash -i <(curl -s https://install.aztec.network)
+
+      - name: Set Aztec version and start sandbox
+        run: |
+          VERSION=0.67.0 aztec-up
+          aztec start --sandbox
+
+      - name: Install project dependencies
+        run: |
+          yarn
+
+      - name: Compile, generate code, and run tests
+        run: |
+          yarn compile && yarn codegen && yarn test

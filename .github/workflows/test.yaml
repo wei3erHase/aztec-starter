@@ -10,7 +10,7 @@ on:
 
 jobs:
   setup-and-run:
-    runs-on: [self-hosted, docker]
+    runs-on: [self-hosted]
 
     steps:
       - name: Checkout repository

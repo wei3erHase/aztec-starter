@@ -1,5 +1,5 @@
 [workspace]
 members = [
-"src/tally",
+    "src/tally",
+    "src/token",
 ]
-

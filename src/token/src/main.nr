@@ -5,7 +5,7 @@ use dep::aztec::macros::aztec;
 contract TokenVotes {
     use dep::aztec::{
         macros::{
-            functions::{initializer, public}, 
+            functions::{initializer, public, view}, 
             storage::storage, 
             notes::note
             },
@@ -82,20 +82,56 @@ contract TokenVotes {
     #[storage]
     struct Storage<Context> {
         public_balances: Map<AztecAddress, PublicMutable<U128, Context>, Context>,
-        public_delegations: Map<AztecAddress, PublicMutable<AztecAddress, Context>, Context>,
+        public_delegatees: Map<AztecAddress, PublicMutable<AztecAddress, Context>, Context>,
+        public_delegations: Map<AztecAddress, PublicMutable<U128, Context>, Context>,
         balances: Map<AztecAddress, BalanceSet<Context>, Context>,
         delegations: Map<AztecAddress, DelegatedBalanceSet<Context>, Context>,
     }
 
     #[public]
     #[initializer]
-    // annotation to mark function as a constructor
     fn constructor() {
         // constructor code
     }
 
     #[public]
-    fn some_public_method() {
-        // NOTE: codegen fails if there is none?
+    fn mint_tokens(amount: U128) {
+        let from = context.msg_sender();
+        let current_balance = storage.public_balances.at(from).read();
+        storage.public_balances.at(from).write(current_balance + amount);
+    }
+
+    #[public]
+    fn delegate_tokens(delegatee: AztecAddress) {
+        let from = context.msg_sender();
+        let current_balance = storage.public_balances.at(from).read();
+
+        // remove the current delegation
+        let current_delegatee = storage.public_delegatees.at(from).read();
+        let mut current_delegations = storage.public_delegations.at(current_delegatee).read();
+        storage.public_delegations.at(current_delegatee).write(current_delegations - current_balance);
+
+        // update the new delegation
+        current_delegations = storage.public_delegations.at(delegatee).read();
+        storage.public_delegations.at(delegatee).write(current_delegations + current_balance);
+
+        /*
+            NOTE:
+            - add timestamp / snapshot of the current balance
+            - amount of delegation at a previous timestamp should be fetchable
+        */
+    }
+
+    #[public]
+    #[view]
+    fn get_voting_points(from: AztecAddress) -> U128 {
+        let mut voting_points: U128 = U128::from_integer(0);
+        if (storage.public_delegatees.at(from).read() == AztecAddress::zero()) {
+            voting_points = storage.public_balances.at(from).read();
+        }
+
+        voting_points += storage.public_delegations.at(from).read();
+
+        voting_points
     }
 }

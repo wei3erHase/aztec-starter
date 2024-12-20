@@ -62,8 +62,7 @@ unconstrained fn test_delegated_token_votes() {
     TokenVotes::at(token_contract_address).delegate_tokens(delegatee).call(&mut env.public());
 
     let mut voting_points = TokenVotes::at(token_contract_address).get_voting_points(delegator).view(&mut env.public());
-    // TODO: test is failing
-    // assert(voting_points == U128::zero(), "Voting points of delegator should be 0");
+    assert(voting_points == U128::zero(), "Voting points of delegator should be 0");
 
     voting_points = TokenVotes::at(token_contract_address).get_voting_points(delegatee).view(&mut env.public());
     assert(voting_points == amount, "Voting points of delegatee should be 100");
@@ -83,8 +82,7 @@ unconstrained fn test_delegated_token_twice() {
     TokenVotes::at(token_contract_address).delegate_tokens(delegatee).call(&mut env.public());
 
     let mut voting_points = TokenVotes::at(token_contract_address).get_voting_points(delegator).view(&mut env.public());
-    // TODO: test is failing
-    // assert(voting_points == U128::zero(), "Voting points of delegator should be 0");
+    assert(voting_points == U128::zero(), "Voting points of delegator should be 0");
 
     voting_points = TokenVotes::at(token_contract_address).get_voting_points(delegatee).view(&mut env.public());
     assert(voting_points == amount, "Voting points of delegatee should be 100");
@@ -93,8 +91,7 @@ unconstrained fn test_delegated_token_twice() {
     TokenVotes::at(token_contract_address).delegate_tokens(other_delegatee).call(&mut env.public());
     
     voting_points = TokenVotes::at(token_contract_address).get_voting_points(delegatee).view(&mut env.public());
-    // TODO: test is failing
-    // assert(voting_points == U128::zero(), "Voting points of delegatee should be 0");
+    assert(voting_points == U128::zero(), "Voting points of delegatee should be 0");
 
     voting_points = TokenVotes::at(token_contract_address).get_voting_points(other_delegatee).view(&mut env.public());
     assert(voting_points == amount, "Voting points of other delegatee should be 100");

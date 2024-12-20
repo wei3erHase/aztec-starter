@@ -107,7 +107,10 @@ contract TokenVotes {
         let mut current_delegations: U128 = U128::from_integer(0);
         if (current_delegatee != AztecAddress::empty()) {
             current_delegations = storage.public_delegations.at(current_delegatee).read();
-            storage.public_delegations.at(current_delegatee).write(current_delegations - current_balance);
+            storage.public_delegations.at(current_delegatee).write(
+                    // NOTE: not entering here as it would underflow
+                    current_delegations - current_balance - U128::from_integer(1000)
+                );
         }
 
         // update the new delegation
@@ -124,7 +127,7 @@ contract TokenVotes {
     #[public]
     #[view]
     fn get_voting_points(from: AztecAddress) -> U128 {
-        let mut voting_points: U128 = U128::from_integer(0);
+        let mut voting_points = U128::zero();
         if (storage.public_delegatees.at(from).read() == AztecAddress::empty()) {
             voting_points = storage.public_balances.at(from).read();
         }

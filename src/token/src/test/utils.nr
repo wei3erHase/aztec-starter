@@ -1,5 +1,6 @@
 use dep::aztec::{
-    prelude::AztecAddress, test::helpers::{test_environment::TestEnvironment},
+    prelude::AztecAddress, 
+    test::helpers::{test_environment::TestEnvironment},
 };
 
 use crate::TokenVotes;

@@ -7,14 +7,21 @@ pub comptime fn my_macro(m: Module) -> Quoted {
         fn end_vote() {
             assert(storage.admin.read().eq(context.msg_sender()), "Only admin can end votes"); // assert that caller is admin
             storage.vote_ended.write(true);
-        }
 
+            _some_internal_function();
+        }
+    }   
+}
+
+pub comptime fn my_other_macro(m: Module) -> Quoted {
+    quote {
         fn _some_internal_function() {
             // do something
         }
     }   
 }
 
+#[my_other_macro] // required to happen before #[my_macro]
 #[my_macro] // required to happen before #[aztec]
 #[aztec]
 contract EasyPrivateVoting {

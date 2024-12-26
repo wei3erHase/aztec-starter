@@ -1,6 +1,28 @@
 mod test;
 use dep::aztec::macros::aztec;
 
+pub comptime fn my_macro(m: Module) -> Quoted {
+    quote {
+        #[public]
+        fn end_vote() {
+            assert(storage.admin.read().eq(context.msg_sender()), "Only admin can end votes"); // assert that caller is admin
+            storage.vote_ended.write(true);
+
+            _some_internal_function();
+        }
+    }   
+}
+
+pub comptime fn my_other_macro(m: Module) -> Quoted {
+    quote {
+        fn _some_internal_function() {
+            // do something
+        }
+    }   
+}
+
+#[my_other_macro] // required to happen before #[my_macro]
+#[my_macro] // required to happen before #[aztec]
 #[aztec]
 contract EasyPrivateVoting {
     use dep::aztec::{
@@ -8,6 +30,7 @@ contract EasyPrivateVoting {
         macros::{functions::{initializer, internal, private, public}, storage::storage},
     };
     use dep::aztec::prelude::{AztecAddress, Map, PublicImmutable, PublicMutable};
+    
     #[storage]
     struct Storage<Context> {
         admin: PublicMutable<AztecAddress, Context>, // admin can end vote
@@ -44,13 +67,10 @@ contract EasyPrivateVoting {
         assert(storage.vote_ended.read() == false, "Vote has ended"); // assert that vote has not ended
         let new_tally = storage.tally.at(candidate).read() + 1;
         storage.tally.at(candidate).write(new_tally);
+
+        _some_internal_function()
     }
 
-    #[public]
-    fn end_vote() {
-        assert(storage.admin.read().eq(context.msg_sender()), "Only admin can end votes"); // assert that caller is admin
-        storage.vote_ended.write(true);
-    }
     unconstrained fn get_vote(candidate: Field) -> pub Field {
         storage.tally.at(candidate).read()
     }

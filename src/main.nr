@@ -13,8 +13,7 @@ contract EasyPrivateVoting {
         encrypted_logs::encrypted_note_emission::encode_and_encrypt_note,
         utils::comparison::Comparator,
     };
-
-
+    use dep::token::Token;
     #[storage]
     struct Storage<Context> {
         admin: PublicMutable<AztecAddress, Context>, // admin can end vote
@@ -22,18 +21,20 @@ contract EasyPrivateVoting {
         vote_ended: PublicMutable<bool, Context>, // vote_ended is boolean
         active_at_block: PublicImmutable<u32, Context>, // when people can start voting
         delegations: PrivateSet<DelegateNote, Context>, // set of delegations
+        token_address: PublicImmutable<AztecAddress, Context>, // address of token contract
     }
 
     #[note]
     pub struct DelegateNote {
         delegator: AztecAddress,
         delegatee: AztecAddress,
+        amount: Field,
         randomness: Field, // Added randomness to prevent privacy leaks
     }
 
     impl DelegateNote {
-        pub fn new(delegator: AztecAddress, delegatee: AztecAddress, randomness: Field) -> Self {
-            DelegateNote { delegator, delegatee, randomness, header: NoteHeader::empty() }
+        pub fn new(delegator: AztecAddress, delegatee: AztecAddress, amount: Field, randomness: Field) -> Self {
+            DelegateNote { delegator, delegatee, amount, randomness, header: NoteHeader::empty() }
         }
     }
 
@@ -75,10 +76,11 @@ contract EasyPrivateVoting {
     #[public]
     #[initializer]
     // annotation to mark function as a constructor
-    fn constructor(admin: AztecAddress) {
+    fn constructor(admin: AztecAddress, token: AztecAddress) {
         storage.admin.write(admin);
         storage.vote_ended.write(false);
         storage.active_at_block.initialize(context.block_number() as u32);
+        storage.token_address.initialize(token);
     }
 
     #[private]
@@ -89,9 +91,32 @@ contract EasyPrivateVoting {
         let secret = context.request_nsk_app(msg_sender_npk_m_hash); // get secret key of caller of function
         let nullifier = std::hash::pedersen_hash([context.msg_sender().to_field(), secret]); // derive nullifier from sender and secret
         context.push_nullifier(nullifier);
-        EasyPrivateVoting::at(context.this_address()).add_to_tally_public(candidate, 1).enqueue(
-            &mut context,
-        );
+
+        EasyPrivateVoting::at(context.this_address()).add_to_tally_public(
+            candidate, 
+            get_token_balance(context.msg_sender(), &mut context)
+            ).enqueue(&mut context,);
+    }
+
+    #[contract_library_method]
+    fn get_token_balance(from: AztecAddress, context: &mut PrivateContext) -> Field {
+        let storage = Storage::init(context);
+
+        // unsafe {
+            // NOTE: unconstrained call!
+            let optimistic_token_balance: U128 = U128::from_field(100); // NOTE: hardcoding 100 as token balance for now
+            //  = oracle::get_token_balance(token_address, from);
+        // }
+
+        // verify that the token balance is correct
+        Token::at(storage.token_address.read()).transfer_in_private(
+            from, 
+            from, 
+            optimistic_token_balance.to_field(), 
+            Field::from_field(0) // NOTE: hardcoding 0 as nonce for now
+            ).call(context);
+
+        optimistic_token_balance.to_field()
     }
 
     #[private]
@@ -103,7 +128,13 @@ contract EasyPrivateVoting {
         let nullifier = std::hash::pedersen_hash([context.msg_sender().to_field(), secret]); // derive nullifier from sender and secret
         context.push_nullifier(nullifier);
 
-        let mut delegation = DelegateNote::new(context.msg_sender(), delegatee, randomness);
+        let mut delegation = DelegateNote::new(
+            context.msg_sender(), 
+            delegatee, 
+            get_token_balance(context.msg_sender(), &mut context),
+            randomness,
+            );
+
         storage.delegations.insert(&mut delegation).emit(encode_and_encrypt_note(
             &mut context,
             delegatee,

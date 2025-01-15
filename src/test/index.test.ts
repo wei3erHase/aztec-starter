@@ -1,5 +1,6 @@
 import { EasyPrivateVotingContractArtifact, EasyPrivateVotingContract } from "../artifacts/EasyPrivateVoting.js"
-import { AccountWallet, CompleteAddress, ContractDeployer, createLogger, Fr, PXE, waitForPXE, TxStatus, createPXEClient, getContractInstanceFromDeployParams, Logger } from "@aztec/aztec.js";
+import { TokenContract } from '@aztec/noir-contracts.js/Token';
+import { AccountWallet, CompleteAddress, ContractDeployer, createLogger, Fr, PXE, waitForPXE, TxStatus, createPXEClient, getContractInstanceFromDeployParams, Logger, ContractInstanceWithAddress } from "@aztec/aztec.js";
 import { getInitialTestAccountsWallets } from "@aztec/accounts/testing"
 
 const setupSandbox = async () => {
@@ -18,6 +19,7 @@ describe("Voting", () => {
     let pxe: PXE;
     let wallets: AccountWallet[] = [];
     let accounts: CompleteAddress[] = [];
+    let tokenContract: TokenContract;
     let logger: Logger;
 
     beforeAll(async () => {
@@ -29,6 +31,16 @@ describe("Voting", () => {
 
         wallets = await getInitialTestAccountsWallets(pxe);
         accounts = wallets.map(w => w.getCompleteAddress())
+
+        // deploy the token contract
+        const [deployerWallet, adminWallet] = wallets;
+        tokenContract = await TokenContract.deploy(
+            deployerWallet, 
+            adminWallet.getCompleteAddress().address,
+            "NAME___________________________",
+            "SYMBOL_________________________",
+            18
+        ).send().deployed();
     })
 
     it("Deploys the contract", async () => {
@@ -70,7 +82,7 @@ describe("Voting", () => {
     it("It casts a vote", async () => {
         const candidate = new Fr(1)
 
-        const contract = await EasyPrivateVotingContract.deploy(wallets[0], accounts[0].address).send().deployed();
+        const contract = await EasyPrivateVotingContract.deploy(wallets[0], accounts[0].address, tokenContract.address).send().deployed();
         const tx = await contract.methods.cast_vote(candidate).send().wait();
         let count = await contract.methods.get_vote(candidate).simulate();
         expect(count).toBe(1n);
@@ -79,7 +91,7 @@ describe("Voting", () => {
     it("It should fail when trying to vote twice", async () => {
         const candidate = new Fr(1)
 
-        const contract = await EasyPrivateVotingContract.deploy(wallets[0], accounts[0].address).send().deployed();
+        const contract = await EasyPrivateVotingContract.deploy(wallets[0], accounts[0].address, tokenContract.address).send().deployed();
         await contract.methods.cast_vote(candidate).send().wait();
 
         // We try voting again, but our TX is dropped due to trying to emit duplicate nullifiers
@@ -97,7 +109,7 @@ describe("Voting", () => {
         const delegatee = accounts[1].address
         const random = new Fr(2)
 
-        const contract = await EasyPrivateVotingContract.deploy(wallets[0], accounts[0].address).send().deployed();
+        const contract = await EasyPrivateVotingContract.deploy(wallets[0], accounts[0].address, tokenContract.address).send().deployed();
         await contract.methods.delegate_vote(delegatee, random).send().wait();
         
         const tx = await contract.withWallet(wallets[1]).methods.cast_delegated_vote(candidate).send().wait();
@@ -110,7 +122,7 @@ describe("Voting", () => {
         const delegatee = accounts[1].address
         const random = new Fr(2)
 
-        const contract = await EasyPrivateVotingContract.deploy(wallets[0], accounts[0].address).send().deployed();
+        const contract = await EasyPrivateVotingContract.deploy(wallets[0], accounts[0].address, tokenContract.address).send().deployed();
         await contract.methods.delegate_vote(delegatee, random).send().wait();
 
         // We try voting again, but our TX is dropped due to trying to emit duplicate nullifiers

@@ -4,13 +4,17 @@ use dep::aztec::macros::aztec;
 #[aztec]
 contract EasyPrivateVoting {
     use dep::aztec::{
-        context::PrivateContext,
-        keys::getters::{get_nsk_app, get_public_keys},
-        macros::{functions::{initializer, internal, private, public}, storage::storage, notes::note},
-        note::{note_interface::NullifiableNote, utils::compute_note_hash_for_nullify},
-        prelude::{AztecAddress, Map, PublicImmutable, PublicMutable, PrivateSet, NoteHeader, NoteGetterOptions},
-        protocol_types::{hash::poseidon2_hash_with_separator, constants::GENERATOR_INDEX__NOTE_NULLIFIER},
-        encrypted_logs::encrypted_note_emission::encode_and_encrypt_note,
+        context::PrivateContext, keys::getters::{get_nsk_app, get_public_keys},
+        macros::{
+            functions::{initializer, internal, private, public}, storage::storage, notes::note,
+        }, note::{note_interface::NullifiableNote, utils::compute_note_hash_for_nullify},
+        prelude::{
+            AztecAddress, Map, PublicImmutable, PublicMutable, PrivateSet, NoteHeader,
+            NoteGetterOptions,
+        },
+        protocol_types::{
+            hash::poseidon2_hash_with_separator, constants::GENERATOR_INDEX__NOTE_NULLIFIER,
+        }, encrypted_logs::encrypted_note_emission::encode_and_encrypt_note,
         utils::comparison::Comparator,
     };
     use dep::token::Token;
@@ -33,17 +37,21 @@ contract EasyPrivateVoting {
     }
 
     impl DelegateNote {
-        pub fn new(delegator: AztecAddress, delegatee: AztecAddress, amount: Field, randomness: Field) -> Self {
+        pub fn new(
+            delegator: AztecAddress,
+            delegatee: AztecAddress,
+            amount: Field,
+            randomness: Field,
+        ) -> Self {
             DelegateNote { delegator, delegatee, amount, randomness, header: NoteHeader::empty() }
         }
     }
 
     impl Eq for DelegateNote {
         fn eq(self, other: Self) -> bool {
-            (self.delegator == other.delegator)
-                & (self.delegatee == other.delegatee)
-                // NOTE: we don't check for randomness in Eq (1 delegation per delegator)
-                // & (self.randomness == other.randomness) 
+            (self.delegator == other.delegator) & (self.delegatee == other.delegatee)
+            // NOTE: we don't check for randomness in Eq (1 delegation per delegator)
+            // & (self.randomness == other.randomness)
         }
     }
 
@@ -92,10 +100,9 @@ contract EasyPrivateVoting {
         let nullifier = std::hash::pedersen_hash([context.msg_sender().to_field(), secret]); // derive nullifier from sender and secret
         context.push_nullifier(nullifier);
 
-        EasyPrivateVoting::at(context.this_address()).add_to_tally_public(
-            candidate, 
-            get_token_balance(context.msg_sender(), &mut context)
-            ).enqueue(&mut context,);
+        EasyPrivateVoting::at(context.this_address())
+            .add_to_tally_public(candidate, get_token_balance(context.msg_sender(), &mut context))
+            .enqueue(&mut context);
     }
 
     #[contract_library_method]
@@ -103,18 +110,19 @@ contract EasyPrivateVoting {
         let storage = Storage::init(context);
 
         // unsafe {
-            // NOTE: unconstrained call!
-            let optimistic_token_balance: U128 = U128::from_field(100); // NOTE: hardcoding 100 as token balance for now
-            //  = oracle::get_token_balance(token_address, from);
+        // NOTE: unconstrained call!
+        let optimistic_token_balance: U128 = U128::from_field(100); // NOTE: hardcoding 100 as token balance for now
+        //  = oracle::get_token_balance(token_address, from);
         // }
-
         // verify that the token balance is correct
-        Token::at(storage.token_address.read()).transfer_in_private(
-            from, 
-            from, 
-            optimistic_token_balance.to_field(), 
-            Field::from_field(0) // NOTE: hardcoding 0 as nonce for now
-            ).call(context);
+        Token::at(storage.token_address.read())
+            .transfer_in_private(
+                from,
+                from,
+                optimistic_token_balance.to_field(),
+                Field::from_field(0), // NOTE: hardcoding 0 as nonce for now
+            )
+            .call(context);
 
         optimistic_token_balance.to_field()
     }
@@ -129,11 +137,11 @@ contract EasyPrivateVoting {
         context.push_nullifier(nullifier);
 
         let mut delegation = DelegateNote::new(
-            context.msg_sender(), 
-            delegatee, 
+            context.msg_sender(),
+            delegatee,
             get_token_balance(context.msg_sender(), &mut context),
             randomness,
-            );
+        );
 
         storage.delegations.insert(&mut delegation).emit(encode_and_encrypt_note(
             &mut context,
@@ -150,19 +158,18 @@ contract EasyPrivateVoting {
             .set_limit(3); // low limit for testing purposes
         let popped_notes = storage.delegations.pop_notes(options);
         let num_delegated_votes = popped_notes.len() as Field;
-        
-        EasyPrivateVoting::at(context.this_address()).add_to_tally_public(candidate, num_delegated_votes).enqueue(
-            &mut context,
-        );
-    }
 
+        EasyPrivateVoting::at(context.this_address())
+            .add_to_tally_public(candidate, num_delegated_votes)
+            .enqueue(&mut context);
+    }
 
     #[public]
     #[internal]
     fn add_to_tally_public(candidate: Field, amount: Field) {
         assert(storage.vote_ended.read() == false, "Vote has ended"); // assert that vote has not ended
         let num_amount = amount;
-        
+
         let new_tally = storage.tally.at(candidate).read() + num_amount;
         storage.tally.at(candidate).write(new_tally);
     }

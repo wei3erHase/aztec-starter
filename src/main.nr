@@ -115,7 +115,6 @@ contract EasyPrivateVoting {
         //  = oracle::get_token_balance(token_address, from);
         // }
         // verify that the token balance is correct
-
         Token::at(storage.token_address.read())
             .transfer_in_private(
                 from,

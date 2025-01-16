@@ -20,8 +20,9 @@ pub unconstrained fn setup() -> (&mut TestEnvironment, AztecAddress, AztecAddres
         18 as u8,
     );
 
-    let token_contract =
-        env.deploy("./@token_contract", "Token").with_public_void_initializer(token_initializer_call_interface);
+    let token_contract = env.deploy("./@token_contract", "Token").with_public_void_initializer(
+        token_initializer_call_interface,
+    );
 
     let initializer_call_interface =
         EasyPrivateVoting::interface().constructor(admin, token_contract.to_address());

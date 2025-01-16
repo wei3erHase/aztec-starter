@@ -62,10 +62,16 @@ unconstrained fn test_cast_vote() {
     let (env, voting_contract_address, token_contract_address, admin) = utils::setup();
     let alice = env.create_account_contract(1);
     env.impersonate(admin);
-    Token::at(token_contract_address).mint_to_private( admin, alice, 100).call(&mut env.private());
-    
+    Token::at(token_contract_address).mint_to_private(admin, alice, 100).call(&mut env.private());
+
     env.impersonate(alice);
-    prepare_authwit(token_contract_address, voting_contract_address, alice, 100, 1);
+    prepare_authwit(
+        token_contract_address,
+        voting_contract_address,
+        alice,
+        100,
+        1,
+    );
 
     let candidate = 1;
     env.advance_block_by(6);
@@ -87,7 +93,7 @@ unconstrained fn test_cast_vote() {
 
 //     env.impersonate(admin);
 //     Token::at(token_contract_address).mint_to_private( admin, alice, 99).call(&mut env.private());
-    
+
 //     env.impersonate(alice);
 
 //     let candidate = 1;
@@ -137,7 +143,7 @@ unconstrained fn test_cast_vote() {
 //     env.impersonate(admin);
 //     Token::at(token_contract_address).mint_to_private( admin, alice, 100).call(&mut env.private());
 //     Token::at(token_contract_address).mint_to_private( admin, bob, 100).call(&mut env.private());
-    
+
 //     env.impersonate(alice);
 //     env.advance_block_by(1);
 //     EasyPrivateVoting::at(voting_contract_address).delegate_vote(bob, random).call(&mut env.private());
@@ -172,7 +178,7 @@ unconstrained fn test_cast_vote() {
 //     Token::at(token_contract_address).mint_to_private( admin, bob, 100).call(&mut env.private());
 //     Token::at(token_contract_address).mint_to_private( admin, carl, 100).call(&mut env.private());
 //     Token::at(token_contract_address).mint_to_private( admin, dave, 100).call(&mut env.private());
-    
+
 //     env.impersonate(alice);
 //     env.advance_block_by(1);
 //     EasyPrivateVoting::at(voting_contract_address).delegate_vote(delegatee, random).call(&mut env.private());
@@ -242,7 +248,7 @@ unconstrained fn test_cast_vote() {
 
 //     env.impersonate(admin);
 //     Token::at(token_contract_address).mint_to_private( admin, alice, 100).call(&mut env.private());
-    
+
 //     env.impersonate(alice);
 //     env.advance_block_by(1);
 //     EasyPrivateVoting::at(voting_contract_address).delegate_vote(bob, random).call(&mut env.private());
@@ -264,7 +270,7 @@ unconstrained fn test_cast_vote() {
 //     env.impersonate(admin);
 //     Token::at(token_contract_address).mint_to_private( admin, alice, 100).call(&mut env.private());
 //     Token::at(token_contract_address).mint_to_private( admin, bob, 100).call(&mut env.private());
-    
+
 //     env.impersonate(alice);
 //     env.advance_block_by(1);
 //     EasyPrivateVoting::at(voting_contract_address).cast_vote(candidate).call(&mut env.private());
@@ -274,7 +280,13 @@ unconstrained fn test_cast_vote() {
 //     EasyPrivateVoting::at(voting_contract_address).delegate_vote(bob, random).call(&mut env.private());
 // }
 
-fn prepare_authwit(token: AztecAddress, caller: AztecAddress, owner: AztecAddress, amount: Field, nonce: Field) {
+fn prepare_authwit(
+    token: AztecAddress,
+    caller: AztecAddress,
+    owner: AztecAddress,
+    amount: Field,
+    nonce: Field,
+) {
     // NOTE: prepares authwit
     let transfer_private_from_call_interface =
         Token::at(token).transfer_in_private(owner, owner, amount, nonce);

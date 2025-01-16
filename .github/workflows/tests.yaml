@@ -35,6 +35,9 @@ jobs:
   
         - name: Compile, generate code, and run tests
           run: script -e -c "${AZTEC_NARGO:-aztec-nargo} compile"
+
+        - name: Compile and copy dependencies
+          run: yarn compile-deps && yarn copy-deps
   
         - name: Codegen
           run: script -e -c "aztec codegen target --outdir src/artifacts"

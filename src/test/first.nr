@@ -1,19 +1,12 @@
 use crate::test::utils;
 use dep::aztec::oracle::{execution::get_block_number, storage::storage_read};
 use dep::aztec::protocol_types::storage::map::derive_storage_slot_in_map;
-use dep::aztec::prelude::AztecAddress;
+use dep::aztec::prelude::{AztecAddress, NoteHeader};
 use dep::token::Token;
-// use dep::authwit::cheatcodes as authwit_cheatcodes;
+use dep::authwit::cheatcodes as authwit_cheatcodes;
+use dep::uint_note::uint_note::UintNote;
 
-// TODO: rm when authwit is imported with Nargo
-use dep::aztec::{
-    context::call_interfaces::CallInterface, hash::hash_args, test::helpers::cheatcodes,
-};
-use dep::aztec::protocol_types::{
-    constants::{GENERATOR_INDEX__AUTHWIT_INNER, GENERATOR_INDEX__AUTHWIT_OUTER},
-    hash::poseidon2_hash_with_separator,
-};
-// ---
+use std::test::OracleMock;
 
 use crate::EasyPrivateVoting;
 
@@ -67,16 +60,32 @@ unconstrained fn test_initializer() {
 //     EasyPrivateVoting::at(voting_contract_address).end_vote().call(&mut env.public());
 // }
 
+// NOTE: failing with "Balance too low" error
 #[test]
 unconstrained fn test_cast_vote() {
     let (env, voting_contract_address, token_contract_address, admin) = utils::setup();
     let alice = env.create_account_contract(1);
-    // TODO: move mint & authwit to setup!
-    env.impersonate(admin);
-    Token::at(token_contract_address).mint_to_private(admin, alice, 100).call(&mut env.private());
-    env.advance_block_by(1);
+    
+    let note_randomness = 420;
+    let _ = OracleMock::mock("getRandomField").returns(note_randomness);
+    let balances_owner_slot =
+        derive_storage_slot_in_map(Token::storage_layout().balances.slot, alice);
 
-    env.impersonate(alice);
+    Token::at(token_contract_address).mint_to_private(admin, alice, 100).call(
+        &mut env.private(),
+    );
+
+    env.add_note(
+        &mut UintNote {
+            value: U128::from_integer(100),
+            owner: alice,
+            randomness: note_randomness,
+            header: NoteHeader::empty(),
+        },
+        balances_owner_slot,
+        token_contract_address,
+    );
+
     prepare_authwit(
         token_contract_address,
         voting_contract_address,
@@ -88,6 +97,7 @@ unconstrained fn test_cast_vote() {
     // check_private_balance(token_contract_address, alice, 100);
     let candidate = 1;
     env.advance_block_by(6);
+    env.impersonate(alice);
     EasyPrivateVoting::at(voting_contract_address).cast_vote(candidate).call(&mut env.private());
 
     // Read vote count from storage
@@ -303,63 +313,5 @@ fn prepare_authwit(
     // NOTE: prepares authwit
     let transfer_private_from_call_interface =
         Token::at(token).transfer_in_private(owner, owner, amount, nonce);
-    // authwit_cheatcodes::
-    add_private_authwit_from_call_interface(owner, caller, transfer_private_from_call_interface);
+    authwit_cheatcodes::add_private_authwit_from_call_interface(owner, caller, transfer_private_from_call_interface);
 }
-
-// TODO: rm when authwit is imported with Nargo
-pub fn add_private_authwit_from_call_interface<C, let M: u32>(
-    on_behalf_of: AztecAddress,
-    caller: AztecAddress,
-    call_interface: C,
-)
-where
-    C: CallInterface<M>,
-{
-    let target = call_interface.get_contract_address();
-    let inputs = unsafe { cheatcodes::get_private_context_inputs(get_block_number()) };
-    let chain_id = inputs.tx_context.chain_id;
-    let version = inputs.tx_context.version;
-    let args_hash = hash_args(call_interface.get_args());
-    let selector = call_interface.get_selector();
-    let inner_hash =
-        compute_inner_authwit_hash([caller.to_field(), selector.to_field(), args_hash]);
-    let message_hash = compute_authwit_message_hash(target, chain_id, version, inner_hash);
-    unsafe { cheatcodes::add_authwit(on_behalf_of, message_hash) };
-}
-
-pub fn compute_inner_authwit_hash<let N: u32>(args: [Field; N]) -> Field {
-    poseidon2_hash_with_separator(args, GENERATOR_INDEX__AUTHWIT_INNER)
-}
-
-pub fn compute_authwit_message_hash(
-    consumer: AztecAddress,
-    chain_id: Field,
-    version: Field,
-    inner_hash: Field,
-) -> Field {
-    poseidon2_hash_with_separator(
-        [consumer.to_field(), chain_id, version, inner_hash],
-        GENERATOR_INDEX__AUTHWIT_OUTER,
-    )
-}
-
-pub unconstrained fn check_private_balance(
-    token_contract_address: AztecAddress,
-    address: AztecAddress,
-    address_amount: Field,
-) {
-    let current_contract_address = get_contract_address();
-    cheatcodes::set_contract_address(token_contract_address);
-    // Direct call to unconstrained
-    let balance_of_private = Token::balance_of_private(address);
-    assert(balance_of_private == address_amount, "Private balance is not correct");
-    cheatcodes::set_contract_address(current_contract_address);
-}
-
-pub unconstrained fn get_contract_address() -> AztecAddress {
-    get_contract_address_oracle()
-}
-
-#[oracle(getContractAddress)]
-unconstrained fn get_contract_address_oracle() -> AztecAddress {}

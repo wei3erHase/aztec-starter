@@ -65,15 +65,13 @@ unconstrained fn test_initializer() {
 unconstrained fn test_cast_vote() {
     let (env, voting_contract_address, token_contract_address, admin) = utils::setup();
     let alice = env.create_account_contract(1);
-    
+
     let note_randomness = 420;
     let _ = OracleMock::mock("getRandomField").returns(note_randomness);
     let balances_owner_slot =
         derive_storage_slot_in_map(Token::storage_layout().balances.slot, alice);
 
-    Token::at(token_contract_address).mint_to_private(admin, alice, 100).call(
-        &mut env.private(),
-    );
+    Token::at(token_contract_address).mint_to_private(admin, alice, 100).call(&mut env.private());
 
     env.add_note(
         &mut UintNote {
@@ -313,5 +311,9 @@ fn prepare_authwit(
     // NOTE: prepares authwit
     let transfer_private_from_call_interface =
         Token::at(token).transfer_in_private(owner, owner, amount, nonce);
-    authwit_cheatcodes::add_private_authwit_from_call_interface(owner, caller, transfer_private_from_call_interface);
+    authwit_cheatcodes::add_private_authwit_from_call_interface(
+        owner,
+        caller,
+        transfer_private_from_call_interface,
+    );
 }

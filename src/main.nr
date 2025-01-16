@@ -105,7 +105,7 @@ contract EasyPrivateVoting {
             .enqueue(&mut context);
     }
 
-    #[contract_library_method]
+    #[contract_library_method] // TODO: what's the effect of this tag?
     fn get_token_balance(from: AztecAddress, context: &mut PrivateContext) -> Field {
         let storage = Storage::init(context);
 
@@ -115,12 +115,13 @@ contract EasyPrivateVoting {
         //  = oracle::get_token_balance(token_address, from);
         // }
         // verify that the token balance is correct
+
         Token::at(storage.token_address.read())
             .transfer_in_private(
                 from,
                 from,
                 optimistic_token_balance.to_field(),
-                Field::from_field(0), // NOTE: hardcoding 0 as nonce for now
+                Field::from_field(1), // NOTE: hardcoding 1 as nonce for now
             )
             .call(context);
 
@@ -179,6 +180,7 @@ contract EasyPrivateVoting {
         assert(storage.admin.read().eq(context.msg_sender()), "Only admin can end votes"); // assert that caller is admin
         storage.vote_ended.write(true);
     }
+
     unconstrained fn get_vote(candidate: Field) -> pub Field {
         storage.tally.at(candidate).read()
     }

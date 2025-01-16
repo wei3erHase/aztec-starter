@@ -13,13 +13,19 @@
     "compile": "${AZTEC_NARGO:-aztec-nargo} compile",
     "deploy": "node --loader ts-node/esm scripts/deploy.ts",
     "get-block": "node --loader ts-node/esm scripts/getBlock.ts",
-    "test": "NODE_NO_WARNINGS=1 node --experimental-vm-modules $(yarn bin jest) --no-cache --runInBand --config jest.integration.config.json && aztec test",
-    "update": "aztec update --contract . && ./.github/scripts/update_contract.sh $(grep -oP 'tag\\s*=\\s*\"\\K[^\"]+' \"Nargo.toml\" | head -1) && yarn"
+    "test": "yarn test:js && yarn test:nr",
+    "test:js": "NODE_NO_WARNINGS=1 node --experimental-vm-modules $(yarn bin jest) --no-cache --runInBand --config jest.integration.config.json",
+    "test:nr": "aztec test",
+    "update": "aztec update --contract . && ./.github/scripts/update_contract.sh $(grep -oP 'tag\\s*=\\s*\"\\K[^\"]+' \"Nargo.toml\" | head -1) && yarn",
+    "compile-deps": "yarn compile-deps:token",
+    "compile-deps:token": "cd ~/nargo/github.com/AztecProtocol/aztec-packages/aztec-packages-v0.69.1/noir-projects/noir-contracts && aztec-nargo compile --package token_contract",
+    "copy-deps": "yarn copy-deps:token",
+    "copy-deps:token": "cp ~/nargo/github.com/AztecProtocol/aztec-packages/aztec-packages-v0.69.1/noir-projects/noir-contracts/target/token_contract-Token.json ./target/token_contract-Token.json"
   },
   "dependencies": {
-    "@aztec/accounts": "0.68.0",
-    "@aztec/aztec.js": "0.68.0",
-    "@aztec/noir-contracts.js": "0.68.0",
+    "@aztec/accounts": "0.69.1",
+    "@aztec/aztec.js": "0.69.1",
+    "@aztec/noir-contracts.js": "0.69.1",
     "@types/node": "^22.5.1"
   },
   "devDependencies": {
